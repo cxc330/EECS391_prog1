@@ -1,0 +1,23 @@
+EECS391 - Artificial Intelligence
+Programming Assignment 1
+Professor Soumya Ray
+Created by: Chien-Hung Chen, Christopher Gross
+Contact emails: cxc330@case.edu, cjg28@case.edu
+
+This programming assignment is built off of SimpleRTS, a open source RTS game provided by the professor.
+
+We are tasked to create a simple agent, called RCAgent2  that does the following:
+    1. Collect enough Gold to build two Peasants
+    2. Build two Peasants
+    3. Collect enough Gold and Wood using all three peasants to build a Farm
+    4. Build a Farm
+    5. Collect enough Gold and Wood using all three peasants to build a Barracks
+    6. Build a Barracks
+    7. Collect enough Gold using all three peasants to bujild two Footmen
+    8. Build Two Footmen
+
+Secondly, we are tasked to create another agent that can move around a map by implementing the A* search algorithm.
+We must use primitiveMoves as specified by the game and must implement a heuristic function. A recommended heuristic is the Chebyshev distance (defined as: D((x1, y1), (x2, y2)) = max (|x2-x1|, |y2-y1|).
+
+The A* search code will be implemented in SearchAgent.java. As a programming assignment, we will try to optimize for space/runtime when obvious, but will not focus the majority of our efforts on doing so.
+
