@@ -22,3 +22,4 @@ We must use primitiveMoves as specified by the game and must implement a heurist
 
 The A* search code will be implemented in SearchAgent.java. As a programming assignment, we will try to optimize for space/runtime when obvious, but will not focus the majority of our efforts on doing so.
 
+Adding a test line to test pushing
