@@ -18,8 +18,10 @@ We are tasked to create a simple agent, called RCAgent2  that does the following
     8. Build Two Footmen
 
 Secondly, we are tasked to create another agent that can move around a map by implementing the A* search algorithm.
-We must use primitiveMoves as specified by the game and must implement a heuristic function. A recommended heuristic is the Chebyshev distance (defined as: D((x1, y1), (x2, y2)) = max (|x2-x1|, |y2-y1|).
+We must use primitiveMoves as specified by the game and must implement a heuristic function. A recommended heuristic is the Chebyshev 
+distance (defined as: D((x1, y1), (x2, y2)) = max (|x2-x1|, |y2-y1|).
 
-The A* search code will be implemented in SearchAgent.java. As a programming assignment, we will try to optimize for space/runtime when obvious, but will not focus the majority of our efforts on doing so.
+The A* search code will be implemented in SearchAgent.java. As a programming assignment, we will try to optimize for space/runtime 
+when obvious, but will not focus the majority of our efforts on doing so.
 
 Adding a test line to test pushing
