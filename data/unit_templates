@@ -20,7 +20,7 @@
 	"Archer" : {
 		"Name" : "Archer",
 		"TemplateType" : "Unit",
-		"TimeCost" : 1,
+		"TimeCost" : 1, 
 		"GoldCost" : 500,
 		"WoodCost" : 50,
 		"FoodCost" : 1,

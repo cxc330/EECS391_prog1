@@ -25,8 +25,8 @@
             </node>
             <node name="model">
             	<map>
-            		<entry key="RequiredGold" value="50"/>
-            		<entry key="RequiredWood" value="10" />
+            		<entry key="RequiredGold" value="50000"/>
+            		<entry key="RequiredWood" value="10000" />
             		<entry key="Midas" value="true" />
             		<entry key="TimeLimit" value="65535" />
             	</map>
