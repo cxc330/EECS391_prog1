@@ -28,7 +28,9 @@
                     <entry key="Midas" value="true" />
                     <entry key="ManifestDestiny" value="false" />
                     <entry key="Conquest" value="false" />
-                    <entry key="TimeLimit" value="65535" />
+                    <entry key="TimeLimit" value="65535" /> 
+                    <entry key="RequiredGold" value="50000"/>
+                    <entry key="RequiredWood" value="10000"/>
                 </map>
             </node>
           </node>
