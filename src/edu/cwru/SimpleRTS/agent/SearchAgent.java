@@ -108,9 +108,28 @@ public class SearchAgent extends Agent {
 				{
 					if (!closedList.contains(neighbor)) //only go if the neighbor isn't all ready checked
 					{
-						tempHCost = heuristicCostCalculator(neighbor, goalSpace); //get the costs of the starting node
 						tempGCost = gCostCalculator(neighbor, currentParent); //Jeff implement gCost calculation
-						tempFCost = tempHCost + tempGCost; //see above
+						boolean better = true;
+						
+						if (!openList.contains(neighbor))
+						{
+							tempHCost = heuristicCostCalculator(neighbor, goalSpace); //get the costs of the starting node
+							hCost.put(neighbor, tempHCost);
+						}
+						else if (tempGCost >= gCost.get(neighbor)) //if our new gCost is better than our old we're awesome
+						{
+							better = false;
+						}
+						
+						if (better)
+						{
+							gCost.put(neighbor, tempGCost); //add the gCost to our hash
+							parentNodes.put(neighbor, currentParent); //add the parent reference
+
+							tempFCost = hCost.get(neighbor) + tempGCost; //calculate our Fcost
+							
+							fCost.put(neighbor, tempFCost); //add the value to our hash
+						} 
 					}					
 				}
 			}
