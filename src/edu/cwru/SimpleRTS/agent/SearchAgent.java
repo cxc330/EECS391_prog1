@@ -10,6 +10,7 @@ import edu.cwru.SimpleRTS.model.resource.ResourceNode.Type;
 import edu.cwru.SimpleRTS.model.resource.ResourceType;
 import edu.cwru.SimpleRTS.model.unit.Unit;
 import edu.cwru.SimpleRTS.model.unit.Unit.UnitView;
+import edu.cwru.SimpleRTS.model.unit.UnitTemplate;
 import edu.cwru.SimpleRTS.util.DistanceMetrics;
 
 public class SearchAgent extends Agent {
@@ -35,9 +36,28 @@ public class SearchAgent extends Agent {
 
 	@Override
 	public Map<Integer, Action> middleStep(StateView state) {
-		// TODO Auto-generated method stub	
+		
+		
 		Map<Integer, Action> actions = new HashMap<Integer, Action>();
 		
+		List<Integer> allUnitIds = state.getAllUnitIds();
+		
+		List<Integer> footmanIds = findUnitType(allUnitIds, state, footman);
+		List<Integer> townHallIds = findUnitType(allUnitIds, state, townHall);
+		
+		if	(townHallIds.size() > 0) //If the town hall isn't dead
+		{
+			actions = aStarSearch(footmanIds.get(0), townHallIds.get(0), state);
+		}	
+		else
+		{
+			System.out.println("Either we killed the townhall!!! ...or you didn't provide one");
+		}
+		
+		if(actions == null)
+		{
+			actions = new HashMap<Integer, Action>();
+		}
 		return actions;
 	}
 
@@ -85,38 +105,58 @@ public class SearchAgent extends Agent {
 		Integer tempFCost = tempHCost + tempGCost; //see above
 		
 		openList.add(startSpace); //start out with the first space
+		hCost.put(startSpace, tempHCost); //add the hCost to the HashMap
+		gCost.put(startSpace, tempGCost); //add the gCost to the HashMap
+		fCost.put(startSpace, tempFCost); //add the fCost to the HashMap
 		
-		hCost.put(goalSpace, tempHCost); //add the hCost to the HashMap
-		gCost.put(goalSpace, tempGCost); //add the gCost to the HashMap
-		fCost.put(goalSpace, tempFCost); //add the fCost to the HashMap
+		System.out.println("Start space: " + startSpace.getXPosition()  + ", " + startSpace.getYPosition());
+		System.out.println("Goal space: " + goalSpace.getXPosition()  + ", " + goalSpace.getYPosition());
 		
 		while (openList.size() > 0) //loop till we exhaust the openList
 		{
 			UnitView currentParent = getLowestCostF(openList, fCost); //finds the UnitView with the lowest fCost
-			
-			if (currentParent.equals(goalSpace) ) //success
+
+			System.out.println("Searching.. " + currentParent.getXPosition() + ", " + currentParent.getYPosition() + " There are " + openList.size() + " items on the OL");
+			if (checkGoal(currentParent, goalSpace, state)) //success
 			{
-				actions = rebuildPath(parentNodes, currentParent, startSpace); 
-				break; 
+				System.out.println("Woot, found the goal");
+				
+				if(currentParent.equals(startSpace)) //The starting space is the final space, attack the townHall
+				{
+					Action attack = Action.createPrimitiveAttack(startSpace.getID(), goalSpace.getID());
+					actions.put(startSpace.getID(), attack);
+				}
+				else //not quite there
+				{
+					actions = rebuildPath(parentNodes, currentParent, startSpace); 
+				}
+				return actions; 
 			}
 			else //keep on searching
 			{
 				openList.remove(currentParent); //remove the object from the openList and add it to the closed list
 				closedList.add(currentParent);
 				
-				ArrayList<UnitView> neighbors = getNeighbors(currentParent, state); //We need to implement neighbor checking and only return valid neighbor types.. i.e. movable squares
-				
+				ArrayList<UnitView> neighbors = getNeighbors(currentParent, state, false); //We need to implement neighbor checking and only return valid neighbor types.. i.e. movable squares
+				System.out.println("Found " + neighbors.size() + " neighbors");
 				for (UnitView neighbor : neighbors) //loop for all neighbors
 				{
-					if (!closedList.contains(neighbor)) //only go if the neighbor isn't all ready checked
+					System.out.println("Searching neighbor at : " + neighbor.getXPosition() + ", " + neighbor.getYPosition());
+					if (checkXYList(closedList, neighbor) == (null)) //only go if the neighbor isn't all ready checked
 					{
-						tempGCost = gCostCalculator(neighbor, currentParent, gCost, parentNodes, startSpace); //Jeff implement gCost calculation
-						boolean better = true;
+						tempGCost = gCostCalculator(neighbor, currentParent, gCost); //grab it's gCost
 						
-						if (!openList.contains(neighbor)) //If the openList doesn't contain this neighbor
+						boolean better = true; //used to check if we found a better gCost in the case of the node all ready being in the openList
+						UnitView tempNeighbor = neighbor;
+						
+						neighbor = checkXYList(openList, neighbor);
+						
+						if (neighbor == (null)) //If the openList doesn't contain this neighbor
 						{
+							neighbor = tempNeighbor;
 							tempHCost = heuristicCostCalculator(neighbor, goalSpace); //get the costs of the starting node
 							hCost.put(neighbor, tempHCost);
+							openList.add(neighbor);
 						}
 						else if (tempGCost >= gCost.get(neighbor)) //See if we found a better gCost.. if so we're awesome
 						{
@@ -136,54 +176,85 @@ public class SearchAgent extends Agent {
 				}
 			}
 		}		
-		
-		return actions; //returns null if we don't find anything
+		System.out.println("No path from search space to goal...");
+		return null; //returns null if we don't find anything
 	}
 	
-	//this calculates the distance between neighbor and currentParent + the g_score of currentParent to startSpace
-	public Integer gCostCalculator(UnitView neighbor, UnitView currentParent, HashMap<UnitView, Integer> gCost, HashMap<UnitView, UnitView> parentNodes, UnitView startParent)
+	public boolean checkGoal(UnitView neighbor, UnitView goal, StateView state)
 	{
-		int total = 0;
-		int xDiff = neighbor.getXPosition() - currentParent.getXPosition();
-		int yDiff = neighbor.getYPosition() - currentParent.getYPosition();
-		//I understand that we're supposed to take the distance between neighbor and currentParent and add it to the cumulative gCost
-		//But should it be pythagorean theorem to find distance? But then the gCost won't be an Integer unless rounded
 		
-		UnitView u = currentParent;
-		total += gCost.get(currentParent).intValue();
-		while(u != startParent)
+		ArrayList<UnitView> units = getNeighbors(neighbor, state, true);
+		Integer x = goal.getXPosition();
+		Integer y = goal.getYPosition();
+		
+		for (UnitView unit : units)
 		{
-			u = parentNodes.get(u);
-			total += gCost.get(u).intValue();
+			Integer unitX = unit.getXPosition();
+			Integer unitY = unit.getYPosition();
+			
+			if (x == unitX && y == unitY)
+			{
+				return true;
+			}
 		}
 		
-		return new Integer(total);
+		return false;
+	}
+	
+	//this calculates the distance between neighbor and currentParent + the g_score of currentParent
+	public Integer gCostCalculator(UnitView neighbor, UnitView currentParent, HashMap<UnitView, Integer> gCost)
+	{
+		Integer cost = gCost.get(currentParent); //currentParent's gCost
 		
+		cost += heuristicCostCalculator(currentParent, neighbor); //just uses chubeycasdyasi for(neighor, parent) + parent's cost
+		
+		return cost;
+		
+	}
+	
+	public UnitView checkXYList(ArrayList<UnitView> list, UnitView unit)
+	{
+		Integer x = unit.getXPosition();
+		Integer y = unit.getYPosition();
+		
+		for (UnitView item : list)
+		{
+			if (item.getXPosition() == (x) && item.getYPosition() == (y))
+				return item;
+		}
+		return null;
 	}
 	
 	//Goes through oList and checks against Hashmap fCost to find the UnitView with the lowest fCost
 	public UnitView getLowestCostF(ArrayList<UnitView> oList, HashMap<UnitView, Integer> fCost)
 	{
-		UnitView lowestCostF = oList.get(0);
-		for(int i = 0; i < oList.size(); i++)
+		UnitView lowestCostF = oList.get(0); // set the first node as the lowest case
+		
+		for(int i = 0; i < oList.size(); i++) // for every item within the list
 		{
-			if(fCost.get(oList.get(i)) < fCost.get(lowestCostF))
+			if(fCost.get(oList.get(i)) < fCost.get(lowestCostF)) //if the new node is lower than the previous
 			{
-				lowestCostF = oList.get(i);
+				lowestCostF = oList.get(i); //set it
 			}
 		}
-		return lowestCostF;
+		
+		return lowestCostF; //return our lowest cost
 	}
 	
 	//returns the path from start to goal
 	public Map<Integer, Action> rebuildPath(HashMap<UnitView, UnitView> parentNodes, UnitView goalParent, UnitView startParent)
 	{
-		ArrayList<UnitView> backwardsPath = new ArrayList<UnitView>();
-		Map<Integer, Action> path = new HashMap<Integer, Action>();
-		backwardsPath.add(goalParent);
-		while(backwardsPath.get(backwardsPath.size()-1) != startParent)
+		ArrayList<UnitView> backwardsPath = new ArrayList<UnitView>(); //The path backwards
+		Map<Integer, Action> path = new HashMap<Integer, Action>(); //The return set of actions
+		backwardsPath.add(goalParent); //add the goal as our first action
+		
+		UnitView parentNode = parentNodes.get(goalParent);
+		backwardsPath.add(parentNode);
+		
+		while (!parentNode.equals(startParent)) //run till we find the starting node
 		{
-			backwardsPath.add(parentNodes.get(backwardsPath.get(backwardsPath.size()-1)));
+			parentNode = parentNodes.get(parentNode);
+			backwardsPath.add(parentNode);
 		}
 		
 		for(int i = (backwardsPath.size()-1); i > 0; i--)
@@ -192,11 +263,12 @@ public class SearchAgent extends Agent {
 			int yDiff = backwardsPath.get(i).getYPosition() - backwardsPath.get(i-1).getYPosition();
 			
 			Direction d = Direction.EAST; //default value
-			if(xDiff > 0 && yDiff > 0) //NW
+			
+			if(xDiff < 0 && yDiff > 0) //NW
 				d = Direction.NORTHEAST;
 			else if(xDiff == 0 && yDiff > 0) //N
 				d = Direction.NORTH;
-			else if(xDiff < 0 && yDiff > 0) //NE
+			else if(xDiff > 0 && yDiff > 0) //NE
 				d = Direction.NORTHWEST;
 			else if(xDiff < 0 && yDiff == 0) //E
 				d = Direction.EAST;
@@ -210,22 +282,90 @@ public class SearchAgent extends Agent {
 				d = Direction.WEST;
 			
 			path.put(backwardsPath.get(i).getID(), Action.createPrimitiveMove(backwardsPath.get(i).getID(), d));
+			System.out.println("Path action: " + backwardsPath.get(i).getXPosition() + ", " + backwardsPath.get(i).getYPosition() + " Direction: " + d.toString());
 		}
 		
 		return path;
 		
 	}
 	
-	public ArrayList<UnitView> getNeighbors(UnitView currentParent, StateView state)
+	public UnitView createOpenSpace(Integer x, Integer y) //creates a dummy UnitView at the requested space
+	{
+		UnitTemplate template = new UnitTemplate(0);
+		Unit unit = new Unit(template, y);
+		
+		
+		unit.setxPosition(x);
+		unit.setyPosition(y);
+		UnitView openSpace = new UnitView(unit);
+		
+		return openSpace;
+	}
+	
+	public ArrayList<UnitView> getNeighbors(UnitView currentParent, StateView state, boolean unitMatters)
 	{
 		ArrayList<UnitView> neighbors = new ArrayList<UnitView>();
-		if(!state.isUnitAt(currentParent.getXPosition()-1, currentParent.getYPosition()-1))
+		
+		Integer x = currentParent.getXPosition();
+		Integer y = currentParent.getYPosition();
+		Integer xPlusOne = x + 1;
+		Integer xMinusOne = x - 1;
+		Integer yPlusOne = y + 1;
+		Integer yMinusOne = y - 1;		
+		
+		Integer tempX = 0, tempY = 0;
+		
+		for (int j = 0; j < 8; j++) //go through all possible 8 squares
 		{
-			//above checks to see if there is a Unit at the currentParent's position -1, -1
-			//not sure if correct, if it is, how do I add to arraylist?
-		}
+			switch(j)
+			{
+				case 0: //x + 1, y
+					tempX = xPlusOne;
+					tempY = y;
+					break;
+				case 1: //x + 1, y + 1
+					tempX = xPlusOne;
+					tempY = yPlusOne;
+					break;
+				case 2: //x + 1, y - 1
+					tempX = xPlusOne;
+					tempY = yMinusOne;
+					break;
+				case 3: //x, y + 1
+					tempX = x;
+					tempY = yPlusOne;
+					break;
+				case 4: //x, y - 1
+					tempX = x;
+					tempY = yMinusOne;
+					break;
+				case 5: //x - 1, y
+					tempX = xMinusOne;
+					tempY = y;
+					break;
+				case 6: //x - 1, y + 1
+					tempX = xMinusOne;
+					tempY = yPlusOne;
+					break;
+				case 7: //x - 1, y - 1
+					tempX = xMinusOne;
+					tempY = yMinusOne;
+					break;
+				default:
+					break;
+			}
+			
+			UnitView neighbor = createOpenSpace(tempX, tempY); //make a dummy space
+			
+			if(checkValidNeighbor(tempX, tempY, state, unitMatters)) //check if it's a valid space
+			{
+				neighbors.add(neighbor);
+			}
+		}		
+		
 		return neighbors;
 	}
+	
 	public Integer heuristicCostCalculator(UnitView a, UnitView b)	{
 	
 		int x1 = a.getXPosition();
@@ -234,6 +374,22 @@ public class SearchAgent extends Agent {
 		int y2 = b.getYPosition();
 		
 		return (DistanceMetrics.chebyshevDistance(x1, y1, x2, y2));
+	}
+	
+	public boolean checkValidNeighbor(Integer x, Integer y, StateView state, boolean unitDoesntMatter)	{ //returns if a space is empty and valid
+		
+		boolean isResource = state.isResourceAt(x, y); //check if there is a resource here
+		boolean isUnit = state.isUnitAt(x, y); //check if there is a unit here
+		boolean isValid = state.inBounds(x, y); //check if the square is valid
+		
+		boolean isNotTaken = !isResource && !isUnit; //if it is not an occupied square
+		
+		if ((isNotTaken || unitDoesntMatter) && isValid) //if there is no resource here and no unit and it's valid it means it's an empty square
+		{
+			return true;
+		}
+		
+		return false;
 	}
 
 }
