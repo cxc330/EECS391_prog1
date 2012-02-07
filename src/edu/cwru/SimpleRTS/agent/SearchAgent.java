@@ -5,9 +5,6 @@ import java.util.*;
 import edu.cwru.SimpleRTS.action.*;
 import edu.cwru.SimpleRTS.environment.State.StateView;
 import edu.cwru.SimpleRTS.model.Direction;
-import edu.cwru.SimpleRTS.model.Template.TemplateView;
-import edu.cwru.SimpleRTS.model.resource.ResourceNode.Type;
-import edu.cwru.SimpleRTS.model.resource.ResourceType;
 import edu.cwru.SimpleRTS.model.unit.Unit;
 import edu.cwru.SimpleRTS.model.unit.Unit.UnitView;
 import edu.cwru.SimpleRTS.model.unit.UnitTemplate;
@@ -142,21 +139,22 @@ public class SearchAgent extends Agent {
 				for (UnitView neighbor : neighbors) //loop for all neighbors
 				{
 					System.out.println("Searching neighbor at : " + neighbor.getXPosition() + ", " + neighbor.getYPosition());
+					
 					if (checkXYList(closedList, neighbor) == (null)) //only go if the neighbor isn't all ready checked
 					{
 						tempGCost = gCostCalculator(neighbor, currentParent, gCost); //grab it's gCost
 						
 						boolean better = true; //used to check if we found a better gCost in the case of the node all ready being in the openList
-						UnitView tempNeighbor = neighbor;
+						UnitView tempNeighbor = neighbor; //temp used in case the neighbor isn't in the openList yet
 						
-						neighbor = checkXYList(openList, neighbor);
+						neighbor = checkXYList(openList, neighbor); //check if the neighbor is in the openList
 						
 						if (neighbor == (null)) //If the openList doesn't contain this neighbor
 						{
 							neighbor = tempNeighbor;
 							tempHCost = heuristicCostCalculator(neighbor, goalSpace); //get the costs of the starting node
-							hCost.put(neighbor, tempHCost);
-							openList.add(neighbor);
+							hCost.put(neighbor, tempHCost); 
+							openList.add(neighbor); //add it to the openList
 						}
 						else if (tempGCost >= gCost.get(neighbor)) //See if we found a better gCost.. if so we're awesome
 						{
@@ -180,21 +178,22 @@ public class SearchAgent extends Agent {
 		return null; //returns null if we don't find anything
 	}
 	
-	public boolean checkGoal(UnitView neighbor, UnitView goal, StateView state)
+	public boolean checkGoal(UnitView neighbor, UnitView goal, StateView state) //checks if we have reached the goal based on if we neighbor the goalSpace
 	{
 		
 		ArrayList<UnitView> units = getNeighbors(neighbor, state, true);
+		
 		Integer x = goal.getXPosition();
 		Integer y = goal.getYPosition();
 		
-		for (UnitView unit : units)
+		for (UnitView unit : units) //for all neighbors
 		{
 			Integer unitX = unit.getXPosition();
 			Integer unitY = unit.getYPosition();
 			
-			if (x == unitX && y == unitY)
+			if (x == unitX && y == unitY) //if it's the same as the goal x, y
 			{
-				return true;
+				return true; //we found it!
 			}
 		}
 		
@@ -212,17 +211,17 @@ public class SearchAgent extends Agent {
 		
 	}
 	
-	public UnitView checkXYList(ArrayList<UnitView> list, UnitView unit)
+	public UnitView checkXYList(ArrayList<UnitView> list, UnitView unit) //Used for checking based on whether or not we all ready have the space of values: x, y
 	{
 		Integer x = unit.getXPosition();
 		Integer y = unit.getYPosition();
 		
-		for (UnitView item : list)
+		for (UnitView item : list) //for every item in the list
 		{
-			if (item.getXPosition() == (x) && item.getYPosition() == (y))
-				return item;
+			if (item.getXPosition() == (x) && item.getYPosition() == (y)) //if it's there
+				return item; //return it
 		}
-		return null;
+		return null; //otherwise return nothing
 	}
 	
 	//Goes through oList and checks against Hashmap fCost to find the UnitView with the lowest fCost
@@ -291,20 +290,23 @@ public class SearchAgent extends Agent {
 	
 	public UnitView createOpenSpace(Integer x, Integer y) //creates a dummy UnitView at the requested space
 	{
-		UnitTemplate template = new UnitTemplate(0);
-		Unit unit = new Unit(template, y);
+		UnitTemplate template = new UnitTemplate(0); //The template, ID 0 is used because we don't care what type it is
+		Unit unit = new Unit(template, y);	//The actual Unit
 		
+		unit.setxPosition(x); //set its x
+		unit.setyPosition(y); //set its y
 		
-		unit.setxPosition(x);
-		unit.setyPosition(y);
-		UnitView openSpace = new UnitView(unit);
+		UnitView openSpace = new UnitView(unit); //make a UnitView from it
 		
-		return openSpace;
+		return openSpace; //return the UnitView
 	}
 	
-	public ArrayList<UnitView> getNeighbors(UnitView currentParent, StateView state, boolean unitMatters)
+	public ArrayList<UnitView> getNeighbors(UnitView currentParent, StateView state, boolean unitDoesntMatter) //returns neighbors 
 	{
-		ArrayList<UnitView> neighbors = new ArrayList<UnitView>();
+		//NOTE: boolean unitDoesntMatter tells it whether we care about whether or not the space is occupied
+		//		It should ONLY be set to true if we are checking goals or cheating...
+		
+		ArrayList<UnitView> neighbors = new ArrayList<UnitView>(); //The return list of all neighbors
 		
 		Integer x = currentParent.getXPosition();
 		Integer y = currentParent.getYPosition();
@@ -317,7 +319,7 @@ public class SearchAgent extends Agent {
 		
 		for (int j = 0; j < 8; j++) //go through all possible 8 squares
 		{
-			switch(j)
+			switch(j) //Could use something better but it's too much thinking right now
 			{
 				case 0: //x + 1, y
 					tempX = xPlusOne;
@@ -357,7 +359,7 @@ public class SearchAgent extends Agent {
 			
 			UnitView neighbor = createOpenSpace(tempX, tempY); //make a dummy space
 			
-			if(checkValidNeighbor(tempX, tempY, state, unitMatters)) //check if it's a valid space
+			if(checkValidNeighbor(tempX, tempY, state, unitDoesntMatter)) //check if it's a valid space
 			{
 				neighbors.add(neighbor);
 			}
@@ -366,7 +368,7 @@ public class SearchAgent extends Agent {
 		return neighbors;
 	}
 	
-	public Integer heuristicCostCalculator(UnitView a, UnitView b)	{
+	public Integer heuristicCostCalculator(UnitView a, UnitView b)	{ //Just uses Chebyshev distances
 	
 		int x1 = a.getXPosition();
 		int x2 = b.getXPosition();
