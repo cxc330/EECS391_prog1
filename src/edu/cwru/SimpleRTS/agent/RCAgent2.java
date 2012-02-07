@@ -25,18 +25,15 @@ public class RCAgent2 extends Agent {
 
 	public RCAgent2(int playernum) {
 		super(playernum);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	public Map<Integer, Action> initialStep(StateView state) {
-		// TODO Auto-generated method stub
 		return middleStep(state);
 	}
 
 	@Override
 	public Map<Integer, Action> middleStep(StateView state) {
-		// TODO Auto-generated method stub
 		
 		List<Integer> allUnitIds = state.getAllUnitIds();
 		List<Integer> townHalls = findUnitType(allUnitIds, state, townHall);

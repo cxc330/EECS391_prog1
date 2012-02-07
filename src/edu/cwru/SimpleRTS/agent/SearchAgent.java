@@ -4,9 +4,11 @@ import java.util.*;
 
 import edu.cwru.SimpleRTS.action.*;
 import edu.cwru.SimpleRTS.environment.State.StateView;
+import edu.cwru.SimpleRTS.model.Direction;
 import edu.cwru.SimpleRTS.model.Template.TemplateView;
 import edu.cwru.SimpleRTS.model.resource.ResourceNode.Type;
 import edu.cwru.SimpleRTS.model.resource.ResourceType;
+import edu.cwru.SimpleRTS.model.unit.Unit;
 import edu.cwru.SimpleRTS.model.unit.Unit.UnitView;
 import edu.cwru.SimpleRTS.util.DistanceMetrics;
 
@@ -90,11 +92,11 @@ public class SearchAgent extends Agent {
 		
 		while (openList.size() > 0) //loop till we exhaust the openList
 		{
-			UnitView currentParent = getLowestCostF(openList, fCost); //Jeff implement the lowest cost F finder
+			UnitView currentParent = getLowestCostF(openList, fCost); //finds the UnitView with the lowest fCost
 			
-			if (currentParent.equals(goalSpace) ) //great success!
+			if (currentParent.equals(goalSpace) ) //success
 			{
-				actions = rebuildPath(parentNodes, currentParent); //Jeff implement rebuilding the path we came from
+				actions = rebuildPath(parentNodes, currentParent, startSpace); 
 				break; 
 			}
 			else //keep on searching
@@ -108,7 +110,7 @@ public class SearchAgent extends Agent {
 				{
 					if (!closedList.contains(neighbor)) //only go if the neighbor isn't all ready checked
 					{
-						tempGCost = gCostCalculator(neighbor, currentParent); //Jeff implement gCost calculation
+						tempGCost = gCostCalculator(neighbor, currentParent, gCost, parentNodes, startSpace); //Jeff implement gCost calculation
 						boolean better = true;
 						
 						if (!openList.contains(neighbor)) //If the openList doesn't contain this neighbor
@@ -138,6 +140,92 @@ public class SearchAgent extends Agent {
 		return actions; //returns null if we don't find anything
 	}
 	
+	//this calculates the distance between neighbor and currentParent + the g_score of currentParent to startSpace
+	public Integer gCostCalculator(UnitView neighbor, UnitView currentParent, HashMap<UnitView, Integer> gCost, HashMap<UnitView, UnitView> parentNodes, UnitView startParent)
+	{
+		int total = 0;
+		int xDiff = neighbor.getXPosition() - currentParent.getXPosition();
+		int yDiff = neighbor.getYPosition() - currentParent.getYPosition();
+		//I understand that we're supposed to take the distance between neighbor and currentParent and add it to the cumulative gCost
+		//But should it be pythagorean theorem to find distance? But then the gCost won't be an Integer unless rounded
+		
+		UnitView u = currentParent;
+		total += gCost.get(currentParent).intValue();
+		while(u != startParent)
+		{
+			u = parentNodes.get(u);
+			total += gCost.get(u).intValue();
+		}
+		
+		return new Integer(total);
+		
+	}
+	
+	//Goes through oList and checks against Hashmap fCost to find the UnitView with the lowest fCost
+	public UnitView getLowestCostF(ArrayList<UnitView> oList, HashMap<UnitView, Integer> fCost)
+	{
+		UnitView lowestCostF = oList.get(0);
+		for(int i = 0; i < oList.size(); i++)
+		{
+			if(fCost.get(oList.get(i)) < fCost.get(lowestCostF))
+			{
+				lowestCostF = oList.get(i);
+			}
+		}
+		return lowestCostF;
+	}
+	
+	//returns the path from start to goal
+	public Map<Integer, Action> rebuildPath(HashMap<UnitView, UnitView> parentNodes, UnitView goalParent, UnitView startParent)
+	{
+		ArrayList<UnitView> backwardsPath = new ArrayList<UnitView>();
+		Map<Integer, Action> path = new HashMap<Integer, Action>();
+		backwardsPath.add(goalParent);
+		while(backwardsPath.get(backwardsPath.size()-1) != startParent)
+		{
+			backwardsPath.add(parentNodes.get(backwardsPath.get(backwardsPath.size()-1)));
+		}
+		
+		for(int i = (backwardsPath.size()-1); i > 0; i--)
+		{
+			int xDiff = backwardsPath.get(i).getXPosition() - backwardsPath.get(i-1).getXPosition();
+			int yDiff = backwardsPath.get(i).getYPosition() - backwardsPath.get(i-1).getYPosition();
+			
+			Direction d = Direction.EAST; //default value
+			if(xDiff > 0 && yDiff > 0) //NW
+				d = Direction.NORTHEAST;
+			else if(xDiff == 0 && yDiff > 0) //N
+				d = Direction.NORTH;
+			else if(xDiff < 0 && yDiff > 0) //NE
+				d = Direction.NORTHWEST;
+			else if(xDiff < 0 && yDiff == 0) //E
+				d = Direction.EAST;
+			else if(xDiff < 0 && yDiff < 0) //SE
+				d = Direction.SOUTHEAST;
+			else if(xDiff == 0 && yDiff < 0) //S
+				d = Direction.SOUTH;
+			else if(xDiff > 0 && yDiff < 0) //SW
+				d = Direction.SOUTHWEST;
+			else if(xDiff > 0 && yDiff == 0) //W
+				d = Direction.WEST;
+			
+			path.put(backwardsPath.get(i).getID(), Action.createPrimitiveMove(backwardsPath.get(i).getID(), d));
+		}
+		
+		return path;
+		
+	}
+	
+	public ArrayList<UnitView> getNeighbors(UnitView currentParent, StateView state)
+	{
+		ArrayList<UnitView> neighbors = new ArrayList<UnitView>();
+		if(!state.isUnitAt(currentParent.getXPosition()-1, currentParent.getYPosition()-1))
+		{
+			//above checks to see if there is a Unit at the currentParent's position -1, -1
+			//not sure if correct, if it is, how do I add to arraylist?
+		}
+		return neighbors;
+	}
 	public Integer heuristicCostCalculator(UnitView a, UnitView b)	{
 	
 		int x1 = a.getXPosition();
