@@ -111,12 +111,12 @@ public class SearchAgent extends Agent {
 						tempGCost = gCostCalculator(neighbor, currentParent); //Jeff implement gCost calculation
 						boolean better = true;
 						
-						if (!openList.contains(neighbor))
+						if (!openList.contains(neighbor)) //If the openList doesn't contain this neighbor
 						{
 							tempHCost = heuristicCostCalculator(neighbor, goalSpace); //get the costs of the starting node
 							hCost.put(neighbor, tempHCost);
 						}
-						else if (tempGCost >= gCost.get(neighbor)) //if our new gCost is better than our old we're awesome
+						else if (tempGCost >= gCost.get(neighbor)) //See if we found a better gCost.. if so we're awesome
 						{
 							better = false;
 						}
@@ -126,17 +126,16 @@ public class SearchAgent extends Agent {
 							gCost.put(neighbor, tempGCost); //add the gCost to our hash
 							parentNodes.put(neighbor, currentParent); //add the parent reference
 
-							tempFCost = hCost.get(neighbor) + tempGCost; //calculate our Fcost
+							tempFCost = hCost.get(neighbor) + tempGCost; //calculate our fCost
 							
 							fCost.put(neighbor, tempFCost); //add the value to our hash
 						} 
 					}					
 				}
 			}
-		}
+		}		
 		
-		
-		return actions;
+		return actions; //returns null if we don't find anything
 	}
 	
 	public Integer heuristicCostCalculator(UnitView a, UnitView b)	{
