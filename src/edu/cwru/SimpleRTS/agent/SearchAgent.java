@@ -279,8 +279,10 @@ public class SearchAgent extends Agent {
 				d = Direction.SOUTHWEST;
 			else if(xDiff > 0 && yDiff == 0) //W
 				d = Direction.WEST;
-			
-			path.put(backwardsPath.get(i).getID(), Action.createPrimitiveMove(backwardsPath.get(i).getID(), d));
+			if (i == backwardsPath.size()-1) //only put on the first action
+			{
+				path.put(backwardsPath.get(i).getID(), Action.createPrimitiveMove(backwardsPath.get(i).getID(), d));
+			}
 			System.out.println("Path action: " + backwardsPath.get(i).getXPosition() + ", " + backwardsPath.get(i).getYPosition() + " Direction: " + d.toString());
 		}
 		
