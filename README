@@ -23,3 +23,7 @@ distance (defined as: D((x1, y1), (x2, y2)) = max (|x2-x1|, |y2-y1|).
 
 The A* search code will be implemented in SearchAgent.java. As a programming assignment, we will try to optimize for space/runtime 
 when obvious, but will not focus the majority of our efforts on doing so.
+
+Use run.sh to run the RCAgent 2. It will auto compile and run the file for you. It uses proj1.config for its configuration
+
+Use searchAgent.sh to run the searchAgent. Edit the map portion of the cmd to change the map used. It also uses proj1.config
