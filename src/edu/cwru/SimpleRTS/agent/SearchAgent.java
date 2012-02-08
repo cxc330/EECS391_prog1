@@ -1,7 +1,13 @@
+/********
+ * File: SearchAgent.java
+ * By: Christopher Gross, Chien-Hung Chen
+ * Email: cjg28@case.edu, cxc330@case.edu
+ * Created: 2/1/2012
+ */
+
 package edu.cwru.SimpleRTS.agent;
 
 import java.util.*;
-
 import edu.cwru.SimpleRTS.action.*;
 import edu.cwru.SimpleRTS.environment.State.StateView;
 import edu.cwru.SimpleRTS.model.Direction;
@@ -20,33 +26,29 @@ public class SearchAgent extends Agent {
 	static String barracks = "Barracks";
 	static String footman = "Footman";
 
+	//Constructor
 	public SearchAgent(int playernum) {
 		super(playernum);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	public Map<Integer, Action> initialStep(StateView state) {
-		// TODO Auto-generated method stub
 		return middleStep(state);
 	}
 
 	@Override
 	public Map<Integer, Action> middleStep(StateView state) {
-		
-		
 		Map<Integer, Action> actions = new HashMap<Integer, Action>();
-		
 		List<Integer> allUnitIds = state.getAllUnitIds();
-		
 		List<Integer> footmanIds = findUnitType(allUnitIds, state, footman);
 		List<Integer> townHallIds = findUnitType(allUnitIds, state, townHall);
 		
-		if	(townHallIds.size() > 0) //If the town hall isn't dead
+		
+		if(townHallIds.size() > 0) //Town Hall not dead
 		{
 			actions = aStarSearch(footmanIds.get(0), townHallIds.get(0), state);
 		}	
-		else
+		else 
 		{
 			System.out.println("Either we killed the townhall!!! ...or you didn't provide one");
 		}
@@ -55,15 +57,15 @@ public class SearchAgent extends Agent {
 		{
 			actions = new HashMap<Integer, Action>();
 		}
+		
 		return actions;
 	}
 
 	@Override
 	public void terminalStep(StateView state) {
-		// TODO Auto-generated method stub
-
 	}
 	
+	//matches units with a type and returns the list of unitIds
 	public List<Integer> findUnitType(List<Integer> ids, StateView state, String name)	{
 		
 		List<Integer> unitIds = new ArrayList<Integer>();
@@ -82,12 +84,14 @@ public class SearchAgent extends Agent {
 		return unitIds;
 	}
 	
+	//A* Search Algorithm
 	public Map<Integer, Action> aStarSearch(Integer startId, Integer goalId, StateView state)	{
 		
 		Map<Integer, Action> actions = new HashMap<Integer, Action>();
 		
-		UnitView startSpace = state.getUnit(startId); //starting space
-		UnitView goalSpace = state.getUnit(goalId); //end space
+		//Start space and end space
+		UnitView startSpace = state.getUnit(startId);
+		UnitView goalSpace = state.getUnit(goalId);
 		
 		ArrayList<UnitView> openList = new ArrayList<UnitView>(); //the open list, will hold items to be searched
 		ArrayList<UnitView> closedList = new ArrayList<UnitView>(); //spaces all ready searched
@@ -109,27 +113,27 @@ public class SearchAgent extends Agent {
 		System.out.println("Start space: " + startSpace.getXPosition()  + ", " + startSpace.getYPosition());
 		System.out.println("Goal space: " + goalSpace.getXPosition()  + ", " + goalSpace.getYPosition());
 		
-		while (openList.size() > 0) //loop till we exhaust the openList
+		//loop till we exhaust the openList
+		while (openList.size() > 0)
 		{
 			UnitView currentParent = getLowestCostF(openList, fCost); //finds the UnitView with the lowest fCost
-
 			System.out.println("Searching.. " + currentParent.getXPosition() + ", " + currentParent.getYPosition() + " There are " + openList.size() + " items on the OL");
+			
 			if (checkGoal(currentParent, goalSpace, state)) //success
 			{
 				System.out.println("Woot, found the goal");
-				
 				if(currentParent.equals(startSpace)) //The starting space is the final space, attack the townHall
 				{
 					Action attack = Action.createPrimitiveAttack(startSpace.getID(), goalSpace.getID());
 					actions.put(startSpace.getID(), attack);
 				}
-				else //not quite there
+				else
 				{
 					actions = rebuildPath(parentNodes, currentParent, startSpace); 
 				}
 				return actions; 
 			}
-			else //keep on searching
+			else
 			{
 				openList.remove(currentParent); //remove the object from the openList and add it to the closed list
 				closedList.add(currentParent);
@@ -178,20 +182,21 @@ public class SearchAgent extends Agent {
 		return null; //returns null if we don't find anything
 	}
 	
-	public boolean checkGoal(UnitView neighbor, UnitView goal, StateView state) //checks if we have reached the goal based on if we neighbor the goalSpace
+	//Checks if we have reached the goal based on if a neighbor is the goalSpace
+	public boolean checkGoal(UnitView neighbor, UnitView goal, StateView state)
 	{
 		
 		ArrayList<UnitView> units = getNeighbors(neighbor, state, true);
-		
 		Integer x = goal.getXPosition();
 		Integer y = goal.getYPosition();
 		
-		for (UnitView unit : units) //for all neighbors
+		//Check each neighbor and determine if it is the goal
+		for (UnitView unit : units)
 		{
 			Integer unitX = unit.getXPosition();
 			Integer unitY = unit.getYPosition();
 			
-			if (x == unitX && y == unitY) //if it's the same as the goal x, y
+			if (x == unitX && y == unitY) //check against goal x, y
 			{
 				return true; //we found it!
 			}
@@ -200,28 +205,25 @@ public class SearchAgent extends Agent {
 		return false;
 	}
 	
-	//this calculates the distance between neighbor and currentParent + the g_score of currentParent
+	//Calculates the distance between neighbor and currentParent + the g_score of currentParent
 	public Integer gCostCalculator(UnitView neighbor, UnitView currentParent, HashMap<UnitView, Integer> gCost)
 	{
-		Integer cost = gCost.get(currentParent); //currentParent's gCost
-		
-		cost += heuristicCostCalculator(currentParent, neighbor); //just uses chubeycasdyasi for(neighor, parent) + parent's cost
-		
-		return cost;
-		
+		return gCost.get(currentParent) + heuristicCostCalculator(currentParent, neighbor);
 	}
 	
-	public UnitView checkXYList(ArrayList<UnitView> list, UnitView unit) //Used for checking based on whether or not we all ready have the space of values: x, y
+	//Determines if we already have the space of values: x, y
+	public UnitView checkXYList(ArrayList<UnitView> list, UnitView unit)
 	{
 		Integer x = unit.getXPosition();
 		Integer y = unit.getYPosition();
 		
-		for (UnitView item : list) //for every item in the list
+		//if something from list is in unit's position, return it
+		for (UnitView item : list)
 		{
-			if (item.getXPosition() == (x) && item.getYPosition() == (y)) //if it's there
-				return item; //return it
+			if (item.getXPosition() == (x) && item.getYPosition() == (y))
+				return item;
 		}
-		return null; //otherwise return nothing
+		return null; //default return value
 	}
 	
 	//Goes through oList and checks against Hashmap fCost to find the UnitView with the lowest fCost
@@ -250,12 +252,14 @@ public class SearchAgent extends Agent {
 		UnitView parentNode = parentNodes.get(goalParent);
 		backwardsPath.add(parentNode);
 		
-		while (!parentNode.equals(startParent)) //run till we find the starting node
+		//run till we find the starting node
+		while (!parentNode.equals(startParent))
 		{
 			parentNode = parentNodes.get(parentNode);
 			backwardsPath.add(parentNode);
 		}
 		
+		//Loops through the path, calculate the direction, and puts it in the Hashmap to return
 		for(int i = (backwardsPath.size()-1); i > 0; i--)
 		{
 			int xDiff = backwardsPath.get(i).getXPosition() - backwardsPath.get(i-1).getXPosition();
@@ -290,7 +294,8 @@ public class SearchAgent extends Agent {
 		
 	}
 	
-	public UnitView createOpenSpace(Integer x, Integer y) //creates a dummy UnitView at the requested space
+	//creates a dummy UnitView at the requested space
+	public UnitView createOpenSpace(Integer x, Integer y)
 	{
 		UnitTemplate template = new UnitTemplate(0); //The template, ID 0 is used because we don't care what type it is
 		Unit unit = new Unit(template, y);	//The actual Unit
@@ -303,7 +308,8 @@ public class SearchAgent extends Agent {
 		return openSpace; //return the UnitView
 	}
 	
-	public ArrayList<UnitView> getNeighbors(UnitView currentParent, StateView state, boolean unitDoesntMatter) //returns neighbors 
+	//returns an ArrayList of plausible neighbors
+	public ArrayList<UnitView> getNeighbors(UnitView currentParent, StateView state, boolean unitDoesntMatter)
 	{
 		//NOTE: boolean unitDoesntMatter tells it whether we care about whether or not the space is occupied
 		//		It should ONLY be set to true if we are checking goals or cheating...
@@ -316,12 +322,12 @@ public class SearchAgent extends Agent {
 		Integer xMinusOne = x - 1;
 		Integer yPlusOne = y + 1;
 		Integer yMinusOne = y - 1;		
-		
 		Integer tempX = 0, tempY = 0;
 		
-		for (int j = 0; j < 8; j++) //go through all possible 8 squares
+		//checking all 8 possible spaces in a grid world
+		for (int j = 0; j < 8; j++)
 		{
-			switch(j) //Could use something better but it's too much thinking right now
+			switch(j)
 			{
 				case 0: //x + 1, y
 					tempX = xPlusOne;
@@ -370,18 +376,15 @@ public class SearchAgent extends Agent {
 		return neighbors;
 	}
 	
-	public Integer heuristicCostCalculator(UnitView a, UnitView b)	{ //Just uses Chebyshev distances
-	
-		int x1 = a.getXPosition();
-		int x2 = b.getXPosition();
-		int y1 = a.getYPosition();
-		int y2 = b.getYPosition();
-		
-		return (DistanceMetrics.chebyshevDistance(x1, y1, x2, y2));
+	//Using chebyshev as our h(n)
+	public Integer heuristicCostCalculator(UnitView a, UnitView b)	
+	{
+		return DistanceMetrics.chebyshevDistance(a.getXPosition(), a.getYPosition(), b.getXPosition(), b.getYPosition());
 	}
 	
-	public boolean checkValidNeighbor(Integer x, Integer y, StateView state, boolean unitDoesntMatter)	{ //returns if a space is empty and valid
-		
+	//returns if a space is empty and valid
+	public boolean checkValidNeighbor(Integer x, Integer y, StateView state, boolean unitDoesntMatter)	
+	{ 
 		boolean isResource = state.isResourceAt(x, y); //check if there is a resource here
 		boolean isUnit = state.isUnitAt(x, y); //check if there is a unit here
 		boolean isValid = state.inBounds(x, y); //check if the square is valid

@@ -3,27 +3,31 @@ Programming Assignment 1
 Professor Soumya Ray
 Created by: Chien-Hung Chen, Christopher Gross
 Contact Emails: cxc330@case.edu, cjg28@case.edu
-Edited: 2/3/2012
+Edited: 2/7/2012
 
-This programming assignment is built off of SimpleRTS, a open source RTS game provided by the professor.
+This programming assignment was built off of SimpleRTS, a open source RTS game provided by the professor and a group of students.
 
-We are tasked to create a simple agent, called RCAgent2  that does the following:
-    1. Collect enough Gold to build two Peasants
-    2. Build two Peasants
-    3. Collect enough Gold and Wood using all three peasants to build a Farm
-    4. Build a Farm
-    5. Collect enough Gold and Wood using all three peasants to build a Barracks
-    6. Build a Barracks
-    7. Collect enough Gold using all three peasants to build two Footmen
-    8. Build Two Footmen
+Running Instructions:
+    Using our provided shell scripts, which will both compile and run the files for you using proj1.config as its configuration:
+        Use rcagent2.sh to run the RCAgent2.
+	    Use searchAgent.sh to run the searchAgent. Edit the map portion of the cmd to change the map used.
 
-Secondly, we are tasked to create another agent that can move around a map by implementing the A* search algorithm.
-We must use primitiveMoves as specified by the game and must implement a heuristic function. A recommended heuristic is the Chebyshev 
-distance (defined as: D((x1, y1), (x2, y2)) = max (|x2-x1|, |y2-y1|).
+Description:
+    First, we were tasked to create a simple agent, called RCAgent2 that does the following:
+        1. Collect enough Gold to build two Peasants
+        2. Build two Peasants
+        3. Collect enough Gold and Wood using all three peasants to build a Farm
+        4. Build a Farm
+        5. Collect enough Gold and Wood using all three peasants to build a Barracks
+        6. Build a Barracks
+        7. Collect enough Gold using all three peasants to build two Footmen
+        8. Build Two Footmen
+    The source code for this agent can be found in the RCAgent2.java file.
 
-The A* search code will be implemented in SearchAgent.java. As a programming assignment, we will try to optimize for space/runtime 
-when obvious, but will not focus the majority of our efforts on doing so.
+    Secondly, we were tasked to create another agent that can move around a map by using the A* search algorithm.
+    We must use primitiveMoves as specified by the game and must implement a heuristic function. A recommended heuristic is the Chebyshev 
+    distance (defined as: D((x1, y1), (x2, y2)) = max (|x2-x1|, |y2-y1|).
+    The source code for the second agent that finds a path on the map using A* search can be found in the SearchAgent.java file. 
 
-Use run.sh to run the RCAgent 2. It will auto compile and run the file for you. It uses proj1.config for its configuration
-
-Use searchAgent.sh to run the searchAgent. Edit the map portion of the cmd to change the map used. It also uses proj1.config
+Note:
+    As a programming assignment, we will try to optimize for space/runtime when obvious, but will not focus the majority of our efforts on doing so.
